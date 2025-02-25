@@ -1,141 +1,93 @@
-PImage sandwich;
-PImage pizza;
-PImage burger;
-PImage basket;
-float sandwichX, sandwichY, pizzaX, pizzaY, burgerX, burgerY;
+PImage sandwich, pizza, burger, basket, backgroundImage;
 float basketX, basketY;
 int score = 0;
 int gameMode = 0;
-
-
+int maxFoodItems = 5;
+ArrayList<Toppings> toppingsList = new ArrayList<Toppings>();
+Basket basket1;
 
 void setup() {
   size(800, 600);
+
+  // Load images
+  backgroundImage = loadImage("GameBg.png"); // The background contains the conveyor belt
+  backgroundImage.resize(width, height); // Ensure it matches the screen size
 
   sandwich = loadImage("Sandwich.png");
   pizza = loadImage("Pizza.png");
   burger = loadImage("Burger.png");
   basket = loadImage("basket.png");
- 
-  sandwichX = 100;
-  sandwichY = 200;
-  pizzaX = 300;
-  pizzaY = 200;
-  burgerX = 500;
-  burgerY = 200;
-  basketX = width + 200;
-  basketY = 100;
 
- 
+  basketX = width + 200;
+  basketY = height - 100;
+
+  // Initialize basket
   basket1 = new Basket(basket, basketX, basketY, 1);
-sandwich1 = new Toppings(sandwich, sandwichX, sandwichY);
-  pizza1 = new Toppings(pizza, pizzaX, pizzaY);
-  burger1 = new Toppings(burger, burgerX, burgerY);
+
+  // Generate food items dynamically
+  for (int i = 0; i < maxFoodItems; i++) {
+    float startX = -200 * i;  // Space out items along the conveyor
+    toppingsList.add(new Toppings(randomFoodImage(), startX, 200, 2));
+  }
 }
 
 void draw() {
-  background(255);
+  background(backgroundImage); // Use the background with the built-in conveyor belt
 
+  if (gameMode == 0) {
+    for (int i = toppingsList.size() - 1; i >= 0; i--) {
+      Toppings topping = toppingsList.get(i);
+      topping.update();
+      if (mousePressed && topping.onTopping()) {
+        topping.x = mouseX;
+        topping.y = mouseY;
+        topping.isPicked = true;
+      }
+      if (basket1.putInBasket(topping)) {
+        toppingsList.remove(i);
+        score += 1;
+      }
+    }
 
-  if(gameMode ==0){
-  if (sandwich1 != null) {
-    sandwich1.render();
+    basket1.update();
+
+    fill(0);
+    textSize(30);
+    text("Score: " + score, 30, 40);
   }
-  if (pizza1 != null) {
-    pizza1.render();
+
+  if (basket1.x < -100) {
+    gameMode = 1;
   }
-  if (burger1 != null) {
-    burger1.render();
-  }
-  pickTopping();
-  basket1.update();
-  addToBasket();
-  fill(0);
-  textSize(30);
-  text("Score: " + score, 30, 40);
-  }
-  
-   if(basket1.x < -100){
-  gameMode = 1; 
- }
-  
-  if(basket1.x < -100 && score ==0){
+
+  if (basket1.x < -100 && score == 0) {
     gameOver();
-  }   
-  
-  if(basket1.x < -100 && score >= 1){
+  }
+
+  if (basket1.x < -100 && score >= 1) {
     endGame();
   }
 }
 
-
-//topping objects
-Toppings sandwich1, pizza1, burger1;
-Basket basket1;
-
-
-
-
-void pickTopping() {
-  if (mousePressed) {
-    if (sandwich1 != null) {
-      if (sandwich1.onTopping(sandwich1)) {
-        sandwich1.x = mouseX;
-        sandwich1.y = mouseY;
-      }
-    }
-
-   if (pizza1 != null) {
-      if (pizza1.onTopping(pizza1)) {
-        pizza1.x = mouseX;
-        pizza1.y = mouseY;
-      }
-    }
-
-   if (burger1 != null) {
-      if (burger1.onTopping(burger1)) {
-        burger1.x = mouseX;
-        burger1.y = mouseY;
-      }
-    }
-  }
-}
-
-void addToBasket() {
-   if (pizza1 != null){
-  if (basket1.putInBasket(pizza1)) {
-    pizza1 = null;
-    score+=1;
-  }
-   }
-  
-if (sandwich1 != null){
-  if (basket1.putInBasket(sandwich1)) {
-    sandwich1 = null;
-    score +=1;
-  }
-}
-if (burger1 != null){
-  if (basket1.putInBasket(burger1)) {
-    burger1 = null;
-    score +=1;
-  }
-}
-}
-
-
-void gameOver(){ 
+void gameOver() {
   background(120);
   textAlign(CENTER);
   textSize(100);
   fill(0);
-  text("Game Over", width/2, height/2);
+  text("Game Over", width / 2, height / 2);
 }
 
-void endGame(){
+void endGame() {
   background(70);
   textAlign(CENTER);
   textSize(100);
   fill(0);
-  text("Score: "+ score, width/2, height/2 +100);
+  text("Score: " + score, width / 2, height / 2 + 100);
+}
+
+PImage randomFoodImage() {
+  int choice = int(random(3));
+  if (choice == 0) return sandwich;
+  if (choice == 1) return pizza;
+  return burger;
 }
